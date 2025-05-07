@@ -1,0 +1,123 @@
+﻿@model ProtelWebReports.Models.ReportModel
+@{
+    ViewData["Title"] = Model.Title;
+}
+
+<div class="container-fluid">
+    <div class="report-header text-center my-4">
+        <h2>@Model.Title</h2>
+        <h4>@Model.FromDate.ToString("dd/MM/yyyy") - @Model.ToDate.ToString("dd/MM/yyyy")</h4>
+    </div>
+
+    <div class="actions-bar mb-3">
+        <div class="row">
+            <div class="col d-print-none">
+                <button class="btn btn-primary" onclick="window.print()">
+                    <i class="fa fa-print"></i> Εκτύπωση
+                </button>
+                <button class="btn btn-success" onclick="exportToExcel()">
+                    <i class="fa fa-file-excel"></i> Εξαγωγή σε Excel
+                </button>
+                <button class="btn btn-info" onclick="location.href='@Url.Action("Index", "Report")'">
+                    <i class="fa fa-plus"></i> Νέα Αναφορά
+                </button>
+                <div class="float-end">
+                    <input type="text" class="form-control d-inline-block w-auto" id="searchInput"
+                           placeholder="Αναζήτηση..." onkeyup="filterTable()">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @if (Model.ColumnNames.Count > 0 && Model.Rows.Count > 0)
+    {
+        <div class="table-responsive">
+            <table class="table table-bordered table-striped" id="reportTable">
+                <thead class="table-light">
+                    <tr>
+                        @foreach (var column in Model.ColumnNames)
+                        {
+                            <th>@column</th>
+                        }
+                    </tr>
+                </thead>
+                <tbody>
+                    @for (int i = 0; i < Model.Rows.Count; i++)
+                    {
+                        var row = Model.Rows[i];
+                        string rowClass = "";
+
+                        @if (i == 0)
+                        {
+                            rowClass = "table-secondary"; // Header row
+                        }
+                        else if (i == Model.Rows.Count - 1)
+                        {
+                            rowClass = "table-primary"; // Totals row
+                        }
+
+                        <tr class="@rowClass">
+                            @for (int j = 0; j < row.Count; j++)
+                            {
+                                var cell = row[j];
+                                string cellClass = "";
+
+                                @if (j > 1 && !string.IsNullOrEmpty(cell))
+                                {
+                                    if (cell.Contains("-") || cell.StartsWith("-"))
+                                    {
+                                        cellClass = "text-danger";
+                                    }
+                                    else if (cell != "0" && cell != "0 %" && !cell.Equals(Model.ColumnNames[j]))
+                                    {
+                                        cellClass = "text-success";
+                                    }
+                                }
+
+                                <td class="@cellClass">@cell</td>
+                            }
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+    else
+    {
+        <div class="alert alert-warning">
+            Δεν βρέθηκαν δεδομένα για τη συγκεκριμένη αναφορά.
+        </div>
+    }
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script>
+    function exportToExcel() {
+        const table = document.getElementById('reportTable');
+        const wb = XLSX.utils.table_to_book(table, { sheet: "@Model.Title" });
+        const reportName = "@(Model.Title.Replace(" ", "_"))_@(Model.FromDate.ToString("yyyyMMdd"))_@(Model.ToDate.ToString("yyyyMMdd")).xlsx";
+        XLSX.writeFile(wb, reportName);
+    }
+
+    function filterTable() {
+        const input = document.getElementById('searchInput');
+        const filter = input.value.toUpperCase();
+        const table = document.getElementById('reportTable');
+        const tr = table.getElementsByTagName('tr');
+
+        for (let i = 1; i < tr.length; i++) {
+            let txtValue = "";
+            const td = tr[i].getElementsByTagName('td');
+
+            for (let j = 0; j < td.length; j++) {
+                txtValue += td[j].textContent || td[j].innerText;
+            }
+
+            if (txtValue.toUpperCase().indexOf(filter) > -1) {
+                tr[i].style.display = "";
+            } else {
+                tr[i].style.display = "none";
+            }
+        }
+    }
+</script>
