@@ -12,82 +12,64 @@
     <div class="actions-bar mb-3">
         <div class="row">
             <div class="col d-print-none">
-                <button class="btn btn-primary" onclick="window.print()">
-                    <i class="fa fa-print"></i> Εκτύπωση
-                </button>
-                <button class="btn btn-success" onclick="exportToExcel()">
-                    <i class="fa fa-file-excel"></i> Εξαγωγή σε Excel
-                </button>
-                <button class="btn btn-info" onclick="location.href='@Url.Action("Index", "Report")'">
-                    <i class="fa fa-plus"></i> Νέα Αναφορά
-                </button>
-                <div class="float-end">
-                    <input type="text" class="form-control d-inline-block w-auto" id="searchInput"
-                           placeholder="Αναζήτηση..." onkeyup="filterTable()">
-                </div>
+                <button class="btn btn-primary" onclick="window.print()">Print Report</button>
+                <button class="btn btn-secondary" onclick="exportToExcel()">Export to Excel</button>
+                <button class="btn btn-info" onclick="location.href='@Url.Action("Index", "Report")'">New Report</button>
+                <input type="text" class="form-control d-inline-block w-auto ms-2" id="searchInput"
+                       placeholder="Search..." onkeyup="filterTable()">
             </div>
         </div>
     </div>
 
-    @if (Model.ColumnNames.Count > 0 && Model.Rows.Count > 0)
-    {
-        <div class="table-responsive">
-            <table class="table table-bordered table-striped" id="reportTable">
-                <thead class="table-light">
-                    <tr>
-                        @foreach (var column in Model.ColumnNames)
+    <div class="table-responsive">
+        <table class="table table-bordered table-striped" id="reportTable">
+            <thead class="table-light">
+                <tr>
+                    @foreach (var column in Model.ColumnNames)
+                    {
+                        <th>@column</th>
+                    }
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var row in Model.Rows)
+                {
+                    string rowClass = "";
+                    if (row.Count > 0)
+                    {
+                        if (row[0] == "100")
                         {
-                            <th>@column</th>
+                            rowClass = "table-primary";
+                        }
+                        else if (row[0] == "-10" || row[0] == "-9" || row[0] == "-8")
+                        {
+                            rowClass = "table-secondary";
+                        }
+                    }
+
+                    <tr class="@rowClass">
+                        @foreach (var cell in row)
+                        {
+                            string cellClass = "";
+                            if (!string.IsNullOrEmpty(cell))
+                            {
+                                if (cell.StartsWith("-"))
+                                {
+                                    cellClass = "text-danger";
+                                }
+                                else if (cell != "0" && int.TryParse(cell, out _))
+                                {
+                                    cellClass = "text-success";
+                                }
+                            }
+
+                            <td class="@cellClass">@cell</td>
                         }
                     </tr>
-                </thead>
-                <tbody>
-                    @for (int i = 0; i < Model.Rows.Count; i++)
-                    {
-                        var row = Model.Rows[i];
-                        string rowClass = "";
-
-                        @if (i == 0)
-                        {
-                            rowClass = "table-secondary"; // Header row
-                        }
-                        else if (i == Model.Rows.Count - 1)
-                        {
-                            rowClass = "table-primary"; // Totals row
-                        }
-
-                        <tr class="@rowClass">
-                            @for (int j = 0; j < row.Count; j++)
-                            {
-                                var cell = row[j];
-                                string cellClass = "";
-
-                                @if (j > 1 && !string.IsNullOrEmpty(cell))
-                                {
-                                    if (cell.Contains("-") || cell.StartsWith("-"))
-                                    {
-                                        cellClass = "text-danger";
-                                    }
-                                    else if (cell != "0" && cell != "0 %" && !cell.Equals(Model.ColumnNames[j]))
-                                    {
-                                        cellClass = "text-success";
-                                    }
-                                }
-
-                                <td class="@cellClass">@cell</td>
-                            }
-                        </tr>
-                    }
-                </tbody>
-            </table>
-        </div>
-    }
-    else
-    {
-        <div class="alert alert-warning">
-            Δεν βρέθηκαν δεδομένα για τη συγκεκριμένη αναφορά.
-        </div>
-    }
+                }
+            </tbody>
+        </table>
+    </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
