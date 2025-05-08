@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.FileSystemGlobbing.Internal;
 using Microsoft.Extensions.Hosting;
 using ProtelWebReports.Services;
 
@@ -9,6 +10,7 @@ namespace ProtelWebReports
 {
     public class Startup
     {
+
         public IConfiguration Configuration { get; }
 
         public Startup(IConfiguration configuration)
@@ -42,16 +44,20 @@ namespace ProtelWebReports
                 app.UseHsts();
             }
 
+
             app.UseStaticFiles();
             app.UseRouting();
             app.UseCors("AllowAll");
 
             app.UseEndpoints(endpoints =>
             {
+                                // default MVC routes
                 endpoints.MapControllerRoute(
-                    name: "default",
-                    pattern: "{controller=Home}/{action=Index}/{id?}");
-            });
+                name: "default",
+                pattern: "{controller=Home}/{action=Index}/{id?}");
+                                // attribute‐routed controllers (API)
+                endpoints.MapControllers();
+                            });
         }
     }
 }

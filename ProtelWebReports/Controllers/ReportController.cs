@@ -3,19 +3,42 @@ using ProtelWebReports.Models;
 using ProtelWebReports.Services;
 using System;
 using System.Threading.Tasks;
+using ProtelWebReports.Controllers;
+using Microsoft.Extensions.Logging;
 
 namespace ProtelWebReports.Controllers
 {
     public class ReportController : Controller
     {
         private readonly IReportService _reportService;
+        private readonly ILogger<ReportController> _logger;
 
-        public ReportController(IReportService reportService)
+        public ReportController(IReportService reportService, ILogger<ReportController> logger)
         {
             _reportService = reportService;
+            _logger = logger;
         }
 
         [HttpGet]
+        public IActionResult Show(string id)
+        {
+            _logger.LogInformation("Show called with id={ReportId}", id);
+
+            if (String.IsNullOrEmpty(id) 
+                || !ApiController.Store.TryGetValue(id, out var reportModel))
+            {
+                _logger.LogWarning("Report id={ReportId} not found", id);
+                return NotFound($"Report με id={id} δεν βρέθηκε.");
+            }
+
+            _logger.LogInformation("Rendering report id={ReportId} with {RowCount} rows", id, reportModel.Rows.Count);
+
+            // χρησιμοποιούμε το ίδιο View "Report" που ήδη έχεις
+            return View("Report", reportModel);
+        }
+
+
+[HttpGet]
         public IActionResult Index()
         {
             return View();
